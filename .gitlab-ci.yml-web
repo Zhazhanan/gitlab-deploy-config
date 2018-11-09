@@ -1,0 +1,17 @@
+stages:
+  - deploy-staging
+  - deploy-prod
+
+deploy-staging:
+  stage: deploy-staging
+  environment: staging
+  script:
+    - sudo ansible-playbook /etc/ansible/playbooks/web/home/staging/playbook.yml --extra-vars "ci_project_dir=$CI_PROJECT_DIR"
+  when: manual
+    
+deploy-prod:
+  stage: deploy-prod
+  environment: prod
+  script:
+    - sudo ansible-playbook /etc/ansible/playbooks/web/home/prod/playbook.yml --extra-vars "ci_project_dir=$CI_PROJECT_DIR"
+  when: manual
