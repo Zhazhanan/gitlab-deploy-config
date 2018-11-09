@@ -1,0 +1,51 @@
+---
+- hosts: staging-teacher-service
+  tasks:
+    - name: install java
+      yum: name=java state=present
+
+    - name: install unzip
+      yum: name=unzip state=present
+      
+    - name: create teacher dir
+      file: path=/teacher state=directory mode=777
+      
+    - name: upload and unzip tingyun agent
+      unarchive: src=tingyun-agent-java.zip dest=/teacher/ mode=777
+      
+    - name: check if service exists
+      stat: path=/etc/systemd/system/yueban-teacher.service
+      register: service_status
+
+    - name: stop service
+      service: name=yueban-teacher state=stopped
+      when: service_status.stat.exists
+      register: service_stopped
+      
+    - name: register as systemd service if service not exist
+      copy: src=yueban-teacher.service dest=/etc/systemd/system
+      when: not service_status.stat.exists
+      register: service_registered
+
+    - name: reload service unit
+      command: systemctl daemon-reload
+      when: service_registered
+      
+    - name: create service dir
+      file: path=/service state=directory mode=777
+    
+    - name: create service log dir
+      file: path=/service/log state=directory mode=777
+    
+    # - name: delete jar
+    #   file: path=/service/yueban-teacher.jar state=absent
+    
+    - name: upload build
+      copy: src={{ci_project_dir}}/build/libs/teacher.jar dest=/service/yueban-teacher.jar mode=777 force=true
+      
+    # - name: upload build
+    #   copy: src=/root/workspace/yueban/teacher/build/libs/teacher.jar dest=/service/yueban-teacher.jar mode=777
+      
+    - name: start service
+      service: name=yueban-teacher enabled=yes state=started
+      when: service_registered

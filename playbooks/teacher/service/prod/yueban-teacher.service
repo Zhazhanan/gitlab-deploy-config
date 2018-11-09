@@ -1,0 +1,11 @@
+[Unit]
+Description=yueban-teacher prod service
+After=syslog.target
+
+[Service]
+User=root
+ExecStart=/usr/bin/java -javaagent:/teacher/tingyun/tingyun-agent-java.jar -jar /service/yueban-teacher.jar --spring.profiles.active=production
+SuccessExitStatus=143
+
+[Install]
+WantedBy=multi-user.target

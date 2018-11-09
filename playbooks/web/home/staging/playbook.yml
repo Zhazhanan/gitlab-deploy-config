@@ -1,0 +1,14 @@
+---
+- hosts: staging-web-home
+  tasks:
+    - name: install nginx
+      yum: name=nginx state=present
+      
+    - name: delete nginx root
+      file: path=/usr/share/nginx/html state=absent
+      
+    - name: upload build
+      copy: src={{ci_project_dir}}/ dest=/usr/share/nginx/html mode=777
+      
+    - name: start nginx
+      service: name=nginx state=started

@@ -1,0 +1,11 @@
+[Unit]
+Description=yueban-schedule staging service
+After=syslog.target
+
+[Service]
+User=root
+ExecStart=/usr/bin/java -javaagent:/schedule/tingyun/tingyun-agent-java.jar -jar /service/yueban-schedule.jar --spring.profiles.active=staging
+SuccessExitStatus=143
+
+[Install]
+WantedBy=multi-user.target

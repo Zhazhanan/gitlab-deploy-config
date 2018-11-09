@@ -1,0 +1,45 @@
+---
+- hosts: prod-schedule-service
+  tasks:
+    - name: install java
+      yum: name=java state=present
+
+    - name: install unzip
+      yum: name=unzip state=present
+   
+    - name: create schedule dir
+      file: path=/schedule state=directory mode=777
+     
+    - name: upload and unzip tingyun agent
+      unarchive: src=tingyun-agent-java.zip dest=/schedule/ mode=777
+      
+    - name: check if service exists
+      stat: path=/etc/systemd/system/yueban-schedule.service
+      register: service_status
+
+    - name: stop service
+      service: name=yueban-schedule state=stopped
+      when: service_status.stat.exists
+      register: service_stopped
+      
+    - name: register as systemd service if service not exist
+      copy: src=yueban-schedule.service dest=/etc/systemd/system
+      when: not service_status.stat.exists
+      register: service_registered
+
+    - name: reload service unit
+      command: systemctl daemon-reload
+      when: service_registered
+      
+    - name: create service dir
+      file: path=/service state=directory mode=777
+    
+    - name: create service log dir
+      file: path=/service/log state=directory mode=777
+      
+    - name: upload build
+      copy: src={{ci_project_dir}}/build/libs/schedule.jar dest=/service/yueban-schedule.jar mode=777
+      
+    - name: start service
+      service: name=yueban-schedule enabled=yes state=started
+      when: service_registered
