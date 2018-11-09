@@ -1,0 +1,45 @@
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+  NAMESPACE: "server"
+  PROJECT: "schedule"
+  BUILD_PATH: "build/libs"
+  BUILD_FILE: "schedule.jar"
+  JOB_NAME: "build"
+
+stages:
+  - install
+  - build  
+  - deploy-staging
+  - deploy-prod
+  
+install:
+  stage: install
+  script:
+    - cd ..
+    - rm -rf core
+    - git clone https://devops:devopsdevops@devops.yuebanjun.com/server/core.git
+    - cd schedule
+
+build:
+  stage: build
+  artifacts:
+    paths:
+    - $BUILD_PATH
+  script:
+    - gradle build --info
+  only:
+    - master
+    
+deploy-staging:
+  stage: deploy-staging
+  environment: staging
+  script:
+    - sudo ansible-playbook /etc/ansible/playbooks/schedule/service/staging/playbook.yml --extra-vars "ci_project_dir=$CI_PROJECT_DIR"
+  when: manual
+  
+deploy-prod:
+  stage: deploy-prod
+  environment: prod
+  script:
+    - sudo ansible-playbook /etc/ansible/playbooks/schedule/service/prod/playbook.yml --extra-vars "ci_project_dir=$CI_PROJECT_DIR"
+  when: manual
